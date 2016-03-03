@@ -15,6 +15,9 @@ FILED= [[], [], []]
 AM = ["public", "protected", "private"]
 PRIMITIVETYPES = ["bool", "char", "short", "int", "long", "float", "double", "long long"]
 
+'''create option'''
+isStatic = False
+
 def USAGE() :
     '''The usage description'''
     print "Usgae: $(pathToAccess)/generateModel [OPTIONS]\n \
@@ -24,8 +27,8 @@ def USAGE() :
             -h,\t\t\t\tgive the help list\n \
             -a,\t\t\t\t[[+-#]attribute1[:[+-#]attribute2]]]\n\n"
 
-def create() :
-    '''class builder'''
+def create_s() :
+    '''class with static 'creat' and 'release' builder'''
     assert len(FILENAME) > 0 and (FILENAME.endswith("h") or FILENAME.endswith("hpp"))
     HFILENAME = DIR + FILENAME
     fp = open(HFILENAME, "w")
@@ -85,11 +88,68 @@ def create() :
     fp.write("\n#endif// !_" + CLASSNAME.upper() + "_H_\n")
     fp.close()
 
+def create() :
+    '''class builder'''
+    assert len(FILENAME) > 0 and (FILENAME.endswith("h") or FILENAME.endswith("hpp"))
+    HFILENAME = DIR + FILENAME
+    fp = open(HFILENAME, "w")
+    fp.write("#ifndef _" + CLASSNAME.upper() + "_H_\n#define _" + CLASSNAME.upper() + "_H_\n\n")
+    fp.write("/**\n  *@file\t\t" + FILENAME + "\n  *\n  *@author\t\t" + USER + "\n  *\n  *@brief\t\t\n  *\n  *@date\t\t" + datetime.datetime.now().strftime("%Y-%m-%d %H:%M") + "\n  *\n  *@history\n  *\n  */\n\n")
+    fp.write("class " + CLASSNAME + "{\n")
+    fp.write("\t/*FIELDS*/\n")
+    for amIndex in range(3):
+        if len(FILED[amIndex]) > 0:
+            fp.write(AM[amIndex] + ":\n")
+        for iterator in range(len(FILED[amIndex])):
+            fp.write("\t" + FILED[amIndex][iterator][0] + " m_" + FILED[amIndex][iterator][1] + ";\n")
+    fp.write("\t/*METHODS*/\n")
+    fp.write("public:\n")
+    for amIndex in range(1, 3):
+        for iterator in range(len(FILED[amIndex])):
+            _at, _an = FILED[amIndex][iterator]
+            fp.write("\t" + _at + " get" + _an.title() + "() const{\n\t\treturn this->m_" + _an + ";\n\t}\n")
+            fp.write("\tvoid set" + _an.title() + "(");
+            if _at in PRIMITIVETYPES:
+                fp.write(_at + " " + _an)
+            else:
+                fp.write("const " + _at + " & " +  _an)
+            fp.write(") {\n\t\t//Validate the arg if necessary\n\t\tthis->m_" + _an + " = " + _an + ";\n\t}\n")
+    fp.write("\t/*CON(DE)STRUTURES*/\n")
+    fp.write("public:\n")
+    Header = "\t" + CLASSNAME + "("
+    InitList = ")\n\t\t: "
+    CreateList = ""
+    ArgList = ""
+    firstArg = True
+    for amIndex in range(3):
+        for iterator in range(len(FILED[amIndex])):
+            _at, _an = FILED[amIndex][iterator]
+            if firstArg == False:
+                Header += ", "
+                InitList += ", "
+                CreateList += ", "
+                ArgList += ", "
+            else:
+                firstArg = False
+            if _at in PRIMITIVETYPES :
+                Header += _at + " " + _an
+                CreateList += _at + " " + _an
+            else:
+                Header += "const " + _at + " & " + _an
+                CreateList += "const " + _at + " & " + _an
+            InitList += "m_" + _an + "(" + _an + ")"
+            ArgList += _an
+    InitList += " {\n\t\t//your own implementation\n\t}"
+    fp.write(Header + InitList)
+    fp.write("\n\tvirtual ~" + CLASSNAME.upper() + "() {}\n")
+    fp.write("};\n\n#endif // ! _" + CLASSNAME.upper() + "_H_\n")
+    fp.close()
+
 '''main'''
 if len(sys.argv) == 1:
     USAGE()
 else:
-    opts, args = getopt.getopt(sys.argv[1:], "hc:f:d:a:")
+    opts, args = getopt.getopt(sys.argv[1:], "shc:f:d:a:")
     for op, value in opts:
         if op == "-h":
             USAGE()
@@ -110,8 +170,13 @@ else:
                 elif _al[0] == "-":
                     amIndex = 2
                 FILED[amIndex].append((_al[1], _al[2]))
+        elif op == "-s":
+            isStatic = True
         else:
             print "Unknown option: " + op + " with value: " + value
 if DIR.endswith("/") == False:
     DIR += "/"
-create()
+if isStatic:
+    create_s()
+else:
+    create()
