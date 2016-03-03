@@ -141,7 +141,7 @@ def create() :
             ArgList += _an
     InitList += " {\n\t\t//your own implementation\n\t}"
     fp.write(Header + InitList)
-    fp.write("\n\tvirtual ~" + CLASSNAME.upper() + "() {}\n")
+    fp.write("\n\tvirtual ~" + CLASSNAME + "() {}\n")
     fp.write("};\n\n#endif // ! _" + CLASSNAME.upper() + "_H_\n")
     fp.close()
 
