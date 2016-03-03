@@ -13,6 +13,7 @@
   *@history
   *<2016/03/03 20:11>updated, to be tested.
   *<2016/03/03 20:18>tested.
+  *<2016/03/03 20:35>bug repaired: 1.implement destructor; 2.add method 'release' instance variable 'm_desc'
   */
 
 class DescMat{
@@ -61,20 +62,26 @@ public:
 		//your own implementation
 		notify();
 	}
-	virtual ~DescMat() {}
+	virtual ~DescMat() {
+		release();
+	}
 	float & at(int w, int h, int bin){
 		return this->m_desc[(w * m_height + h) * m_nBins + bin];
 	}
 protected:
 	void notify(){
-		if(this->m_desc != nullptr){
-			delete [] this->m_desc;
-			this->m_desc = nullptr;
-		}
+		release();
 		int _sz = this->m_width * this->m_height * this->m_nBins;
 		this->m_desc = new float [_sz];
 		for(int __iterator = 0; __iterator < _sz; ++ __iterator){
 			this->m_desc[__iterator] = 0;
+		}
+	}
+
+	void release(){
+		if(this->m_desc != nullptr){
+			delete []this->m_desc;
+			this->m_desc = nullptr;
 		}
 	}
 };
